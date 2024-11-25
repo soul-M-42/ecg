@@ -1,0 +1,7 @@
+training2017/
+cv/
+*.pdf
+*.csv
+*.mat
+*.hea
+*.pyc
