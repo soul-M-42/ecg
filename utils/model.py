@@ -112,4 +112,4 @@ class Mscnn(nn.Module):
         merge = p15.view(p15.size()[0], -1)
         output = self.out(merge)
         output = F.sigmoid(output)
-        return output
+        return output, merge
