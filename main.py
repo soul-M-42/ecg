@@ -8,7 +8,7 @@ from tqdm import tqdm  # Import tqdm
 # 从外部导入自定义模块
 from utils.data import get_dataloaders  # 你需要在 `dataset.py` 中定义 CustomDataset
 from utils.training import train_one_epoch, validate
-from utils.model import Mscnn      # 你需要在 `model.py` 中定义 CustomModel
+from utils.model import Mscnn, Mscnn_bistream      # 你需要在 `model.py` 中定义 CustomModel
 
 data_path = 'C:/EEE5046 Signal/PR2/ecg'
 NUM_EPOCHS = 20
@@ -51,9 +51,10 @@ def main():
         acc_val_best = 0
         print(f'Fold {cv}')
         train_loader, val_loader = get_dataloaders(data_path, cv=0, batch_size=BS)
-        model = Mscnn(1, 1).to(DEVICE)
+        model = Mscnn_bistream(1, 1).to(DEVICE)
         optimizer = Adam(model.parameters(), lr=LEARNING_RATE)
         criterion = 'class_clisa'
+        criterion = 'class'
         
         # Wrap the epoch loop with tqdm for progress bar
         for epoch in range(NUM_EPOCHS):

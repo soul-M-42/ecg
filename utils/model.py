@@ -115,3 +115,46 @@ class Mscnn(nn.Module):
         output = self.out(merge)
         output = torch.sigmoid(output)
         return output, fea
+
+class Mscnn_bistream(nn.Module):
+    # TODO: Build a better model
+    def __init__(self, ch_in, ch_out):
+        super(Mscnn_bistream, self).__init__()
+        self.stream1 = nn.Sequential(
+            Doubleconv_33(ch_in, 64),
+            nn.MaxPool1d(3, stride=3),
+            Doubleconv_33(64, 128),
+            nn.MaxPool1d(3, stride=3),
+            Tripleconv(128, 256),
+            nn.MaxPool1d(2, stride=2),
+            Tripleconv(256, 512),
+            nn.MaxPool1d(2, stride=2),
+            Tripleconv(512, 512),
+            nn.MaxPool1d(2, stride=2)
+        )
+        self.stream2 = nn.Sequential(
+            Doubleconv_33(ch_in, 64),
+            nn.MaxPool1d(3, stride=3),
+            Doubleconv_33(64, 128),
+            nn.MaxPool1d(3, stride=3),
+            Tripleconv(128, 256),
+            nn.MaxPool1d(2, stride=2),
+            Tripleconv(256, 512),
+            nn.MaxPool1d(2, stride=2),
+            Tripleconv(512, 512),
+            nn.MaxPool1d(2, stride=2)
+        )
+        self.bn = nn.BatchNorm1d(512*36*2, track_running_stats=False,)
+        self.out = MLP(512*36*2, ch_out)  
+
+    def forward(self, x):
+        x_1, x_2 = self.stream1(x), self.stream2(x)
+        x_1 = x_1.reshape(x_1.shape[0], -1)
+        x_2 = x_2.reshape(x_2.shape[0], -1)
+        merge = torch.concat([x_1, x_2], dim=1)
+        # print(merge.shape)
+        # merge = x_1.view(x_2.size()[0], -1)
+        fea = self.bn(merge)
+        output = self.out(merge)
+        output = torch.sigmoid(output)
+        return output, fea
