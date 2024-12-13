@@ -1,6 +1,7 @@
 # In this section, we will apply an CNN to extract features and implement a classification task.
 # Firstly, we should build the model by PyTorch. We provide a baseline model here.
 # You can use your own model for better performance
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -66,13 +67,13 @@ class MLP(nn.Module):
         super(MLP, self).__init__()
         self.fc = nn.Sequential(
             nn.Linear(ch_in, 1024),
-            nn.BatchNorm1d(1024),
+            nn.BatchNorm1d(1024, track_running_stats=False),
             nn.ReLU(inplace=True),
             nn.Linear(1024, 1024),
-            nn.BatchNorm1d(1024),
+            nn.BatchNorm1d(1024, track_running_stats=False),
             nn.ReLU(inplace=True),
             nn.Linear(1024, 256),
-            nn.BatchNorm1d(256),
+            nn.BatchNorm1d(256, track_running_stats=False),
             nn.ReLU(inplace=True),
             nn.Linear(256, ch_out),
         )
@@ -95,7 +96,7 @@ class Mscnn(nn.Module):
         self.pool14 = nn.MaxPool1d(2, stride=2)
         self.conv15 = Tripleconv(512, 512)
         self.pool15 = nn.MaxPool1d(2, stride=2)
-
+        self.bn = nn.BatchNorm1d(512*36, track_running_stats=False,)
         self.out = MLP(512*36, ch_out)  
 
     def forward(self, x):
@@ -110,6 +111,7 @@ class Mscnn(nn.Module):
         c15 = self.conv15(p14)
         p15 = self.pool15(c15)
         merge = p15.view(p15.size()[0], -1)
+        fea = self.bn(merge)
         output = self.out(merge)
-        output = F.sigmoid(output)
-        return output, merge
+        output = torch.sigmoid(output)
+        return output, fea
